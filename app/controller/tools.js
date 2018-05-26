@@ -16,7 +16,7 @@ class ToolsController extends Controller {
 				{
 					let { code, msg } = await this.service.tools.publish(this.ctx.query.repoKey);
 					ctx.response.type = 'application/json';
-					ctx.body = JSON.parse({ code, msg });
+					ctx.body = JSON.stringify({ code, msg });
 				}
 				break;
 		}
