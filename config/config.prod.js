@@ -10,7 +10,7 @@ module.exports = (appInfo) => {
 	config.siteRoot = "/home/kamilic-site";
 
 	// token
-	config.token = "";
+	config.token = process.env.build_token;
 
 	return config;
 };

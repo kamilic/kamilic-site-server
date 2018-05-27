@@ -21,14 +21,15 @@ function resetRunningStatus() {
  * @param {String} repoKey - repo.json 中的 repoKey，用于拉取相应的 git 仓库
  * @param {String} path - 脚本文件的路径 
  */
-function runPullRepoScripts(repoKey, path) {
+function runPullRepoScripts(repoKey, path, token) {
 	if (runningStatus.isRunning === false) {
 		runningStatus.isRunning = true;
 		runningStatus.runningTime = moment();
+		console.log();
 		return new Promise((res, rej) => {
 			let child = shelljs.exec(
-				`node ${path} --repoKey=${repoKey} --single`,
-				{ async: true },
+				`env build_token=${process.env.build_token} node ${path} --repoKey=${repoKey} --token=${token} --single`,
+				{ async: true, silent: true },
 				(code, stdout, stderr) => {
 					if (code === 0) {
 						res({
@@ -36,7 +37,7 @@ function runPullRepoScripts(repoKey, path) {
 							msg: stdout
 						});
 					} else {
-						let parsedError = new Error(/Error:\s(.*?)\n/g.exec(stderr)[1]);
+						let parsedError = new Error(/Error:\s(.*?)\n/gi.exec(stderr)[1]);
 						rej(parsedError);
 					}
 					resetRunningStatus();
@@ -48,14 +49,17 @@ function runPullRepoScripts(repoKey, path) {
 			});
 
 			child.stderr.on('data', (data) => {
-				runningStatus.msg += data;
+				let parsedError = /Error:\s(.*?)\n/gi.exec(data);
+				if (parsedError) {
+					runningStatus.msg += parsedError[1];
+				}
 			});
 		});
 	}
 }
 
 class ToolsService extends Service {
-	async publish(repoKey) {
+	async publish(repoKey, token) {
 		if (repoKey === undefined) {
 			return Promise.reject(new Error('请提供 repoKey'));
 		}
@@ -77,7 +81,7 @@ class ToolsService extends Service {
 		let fulfillRequirement = isRepoConfigsExist && isPullRepoScriptExist;
 
 		if (fulfillRequirement) {
-			return runPullRepoScripts(repoKey, pullRepoPath);
+			return runPullRepoScripts(repoKey, pullRepoPath, token);
 		} else {
 			return Promise.reject(new Error('在 kamilic-site 项目中，发布项目代码所依赖的代码不存在，请重新拉取 kamilic-site'));
 		}

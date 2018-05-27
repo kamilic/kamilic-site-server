@@ -4,17 +4,18 @@ const Controller = require('egg').Controller;
 
 class ToolsController extends Controller {
 	async ['publish-project'](ctx) {
+		let { repoKey, token } = ctx.query;
 		switch (ctx.accepts('html', 'json')) {
 			case 'html':
 				{
-					this.service.tools.publish(this.ctx.query.repoKey);
-					ctx.response.redirect("/tools/publish-status");
+					this.service.tools.publish(repoKey, token);
+					ctx.response.redirect('/tools/publish-status');
 				}
 				break;
 
 			case 'json':
 				{
-					let { code, msg } = await this.service.tools.publish(this.ctx.query.repoKey);
+					let { code, msg } = await this.service.tools.publish(repoKey, token);
 					ctx.response.type = 'application/json';
 					ctx.body = JSON.stringify({ code, msg });
 				}
